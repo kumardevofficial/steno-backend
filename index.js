@@ -1,41 +1,32 @@
 import express from "express";
-import dotenv from "dotenv";
-import connectDB from "./config/db.js";
-import cors from "cors"
 import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import passageRoutes from "./routes/passageRoutes.js";
 
-dotenv.config();   // load .env file
-connectDB();
+dotenv.config(); // load .env file
 
 const app = express();
-app.use(cors({
-  origin: "*"
-}));
+const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/typingApp";
+
+// Middleware
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-const PostSchema = new mongoose.Schema({
-  title: String,
-  description: String,
-});
-const Post = mongoose.model("Post", PostSchema);
+// Routes
+app.use("/api/posts", passageRoutes);
 
+// Base route
 app.get("/", (req, res) => {
-  res.send("hey welcome to the backend 🚀");
+  res.send("🚀 Welcome to Typing App Backend");
 });
 
-app.post("/api/posts", async (req, res) => {
-  try {
-    const { title, description } = req.body;
-    const newPost = new Post({ title, description });
-    await newPost.save();
-    res.status(201).json({ message: "Post created!", post: newPost });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-});
+// MongoDB Connection
+mongoose
+  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  })
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
